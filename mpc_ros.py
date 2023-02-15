@@ -9,11 +9,11 @@ class MPC:
 
     initStandardDeviation = 100.0
 
-    minVelocity = -5 #Units per second (0.05 m = 1 unit)
-    maxVelocity = 5
+    minVelocity = -20 #Units per second (0.05 m = 1 unit)
+    maxVelocity = 20
 
-    minAngularVelocity = -3.49066 #Theta per second (Rad)
-    maxAngularVelocity = 3.49066
+    minAngularVelocity = -3 #Theta per second (Rad)
+    maxAngularVelocity = 3
 
 
     def __init__(self, timesteps, sampleCount, bestSamples, iterations, timePerTimestep=0.2):
@@ -206,7 +206,7 @@ class MPC:
 
             self.findNewMeans(costs,samples)
 
-
+        #TODO- change from mean to best sample
         velocity = self.means[0][0]
         angularVelocity = self.means[0][1]
 

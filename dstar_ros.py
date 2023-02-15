@@ -32,6 +32,8 @@ class Dstar():
 
         self.radius = radius
 
+        self.needs_new_path = True #updates when map changes to know when to create new path list
+
 
     #Update Pose (current position)
     def update_position(self, coords):
@@ -322,7 +324,8 @@ class Dstar():
             
             path_list.append(path_node)
             gvals.clear()
-
+        
+        self.needs_new_path = False
         return path_list
 
     '''
@@ -361,6 +364,8 @@ class Dstar():
                         self.update_node([i-1,j+1], False)
 
             self.find_path(False) #recalculate g values
+
+            self.needs_new_path = True
 
 
     #Updates the map with new grid whenever map is changed
