@@ -4,12 +4,13 @@ from std_msgs.msg import Float32MultiArray
 from nav_msgs.msg import Odometry, OccupancyGrid
 from tf.transformations import euler_from_quaternion
 import dstar_ros
+import numpy
 
 def main():
 
     goal = [0, 0]
     start = [0, 0]
-    init_map = []
+    init_map = numpy.array([])
 
     radius = 8 #robot rad (grid units)
 
