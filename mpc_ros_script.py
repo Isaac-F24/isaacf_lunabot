@@ -16,7 +16,7 @@ def main():
 
     mpc = mpc_ros.MPC(timesteps, sampleCount, bestSamples, iterations, timePerTimestep= (1/frequency))
 
-    velocity_publisher = rospy.Publisher("\cmd_vel", Twist, queue_size = 10)
+    velocity_publisher = rospy.Publisher("/cmd_vel", Twist, queue_size = 10)
 
     def path_subscriber(data):
         mpc.updatePath(data)
