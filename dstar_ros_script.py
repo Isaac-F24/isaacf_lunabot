@@ -15,7 +15,7 @@ def main():
 
     frequency = 10 #hz
 
-    dstar = dstar_ros.Dstar()
+    dstar = dstar_ros.Dstar(goal, start, init_map, radius)
 
     path_publisher = rospy.Publisher("/path", Float32MultiArray, queue_size = 10)
 
