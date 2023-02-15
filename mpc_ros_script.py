@@ -57,3 +57,6 @@ def main():
         velocity_twist.angular.z = angular_velocity
         velocity_publisher.publish(velocity_twist)
         rate.sleep()
+
+if __name__ == "__main__":
+    main()

@@ -45,3 +45,6 @@ def main():
         path_publisher.publish(path)
 
         rate.sleep()
+
+if __name__ == "__main__":
+    main()
