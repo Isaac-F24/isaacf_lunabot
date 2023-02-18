@@ -7,6 +7,8 @@ import mpc_ros
 
 def main():
 
+    rospy.init_node('mpc_node')
+
     timesteps = 4
     sampleCount = 500
     bestSamples = 50
