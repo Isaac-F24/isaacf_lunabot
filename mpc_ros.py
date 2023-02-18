@@ -45,9 +45,6 @@ class MPC:
     def updateGrid(self, grid):
         self.arena = grid
 
-    def gridToRobotCoords(self, coords):
-        pass
-
     def robotCoordsToGrid(self, coords):
         pass
 

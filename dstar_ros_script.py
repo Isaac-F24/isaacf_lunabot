@@ -36,10 +36,14 @@ def main():
 
     rate = rospy.Rate(frequency)
 
+    completedInitialRun = False
 
-    dstar.find_path(True)
     path = []
     while not rospy.is_shutdown():
+        if (not completedInitialRun and len(init_map) > 0):
+            dstar.find_path(True)
+            completedInitialRun = True
+
         if (dstar.needs_new_path):
             path = dstar.createPathList()
 
