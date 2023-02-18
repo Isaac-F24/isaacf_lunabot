@@ -13,17 +13,24 @@ class Dstar():
     creating a list of node values (g and rhs), all initialized to infinity, setting the rhs of the goal node to 0, and inserting
     the goal node into the priority queue
     '''
-    def __init__(self, goal, start, init_map, radius):
+    def __init__(self, goal, start, init_map, radius, resolution, x_offset, y_offset):
         self.node_queue = PriorityQueue()
         self.km = 0.0
 
         self.node_values_list = maxsize * np.ones((init_map.shape[0], init_map.shape[1], 2)) #2d Array of nodes: each value is [Distance (g), Estimate (rhs)]
 
+        self.x_offset = x_offset
+        self.y_offset = y_offset
+
+        self.current_map = init_map
+
+        self.res = resolution
+
+        goal = self.convertToGrid(goal)
+
         self.node_values_list[goal[0], goal[1], 1] = 0
 
-        self.insert(goal,self.calculate_key(goal, False))
-
-        self.currentMap = init_map
+        start = self.convertToGrid(start)
 
         self.current_node = start
         self.prev_node = start
@@ -32,7 +39,10 @@ class Dstar():
 
         self.radius = radius
 
-        self.needs_new_path = True #updates when map changes to know when to create new path list
+        self.needs_new_path = True #updates when map changes to know when to create new path 
+        
+        self.insert(goal,self.calculate_key(goal, False))
+
 
 
     #Update Pose (current position)
@@ -40,8 +50,10 @@ class Dstar():
         position = self.convertToGrid(coords)
         self.current_node = position
 
-    def convertToGrid(self):
-        pass
+    def convertToGrid(self, pos):
+        shifted_pos = [pos[0] - self.x_offset, pos[1] - self.y_offset]
+        coord = [int(self.current_map.shape[0] - shifted_pos[1] / self.res + 0.5), int(shifted_pos[0] / self.res + 0.5)]
+        return coord
 
     # returns the lowest priority in the queue
     def topKey(self):
@@ -97,7 +109,7 @@ class Dstar():
     and taking the lowest value.
     '''
     def calculate_RHS(self, node:list):
-        if (self.currentMap[node[0]][node[1]] == 1 or self.currentMap[node[0]][node[1]] == 2): #Chheck for obstacle
+        if (self.current_map[node[0]][node[1]] == 1 or self.current_map[node[0]][node[1]] == 2): #Chheck for obstacle
             return maxsize
 
         surrounding_values = [] #a list of distance values (floats)
@@ -105,49 +117,49 @@ class Dstar():
         #For each node (all 8 directions)
 
         if (node[0] > 0): #above
-            if (self.currentMap[node[0]-1][node[1]] == 1 or self.currentMap[node[0]-1][node[1]] == 2): #Check if off grid or it is an obstacle
+            if (self.current_map[node[0]-1][node[1]] == 1 or self.current_map[node[0]-1][node[1]] == 2): #Check if off grid or it is an obstacle
                 surrounding_values.append(maxsize) #if so, add inf to the list
             else:
                 g_val = self.node_values_list[node[0]-1][node[1]][0] #Otherwise get the gvalue of the node we're checking
                 surrounding_values.append(g_val + 1)      #and add 1 or 1.4 based on the euclidean distance to get to the node we're calculating for
-        if (node[0] < len(self.currentMap)-1): #below
-            if (self.currentMap[node[0]+1][node[1]] == 1 or self.currentMap[node[0]+1][node[1]] == 2):
+        if (node[0] < len(self.current_map)-1): #below
+            if (self.current_map[node[0]+1][node[1]] == 1 or self.current_map[node[0]+1][node[1]] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]+1][node[1]][0]
                 surrounding_values.append(g_val + 1)
         if (node[1] > 0): #left
-            if (self.currentMap[node[0]][node[1]-1] == 1 or self.currentMap[node[0]][node[1]-1] == 2):
+            if (self.current_map[node[0]][node[1]-1] == 1 or self.current_map[node[0]][node[1]-1] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]][node[1]-1][0]
                 surrounding_values.append(g_val + 1)
-        if (node[1] < len(self.currentMap[0])-1): #right
-            if (self.currentMap[node[0]][node[1]+1] == 1 or self.currentMap[node[0]][node[1]+1] == 2):
+        if (node[1] < len(self.current_map[0])-1): #right
+            if (self.current_map[node[0]][node[1]+1] == 1 or self.current_map[node[0]][node[1]+1] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]][node[1]+1][0]
                 surrounding_values.append(g_val + 1)    
         if (node[0] > 0 and node[1] > 0): #Topleft
-            if (self.currentMap[node[0]-1][node[1]-1] == 1 or self.currentMap[node[0]-1][node[1]-1] == 2):
+            if (self.current_map[node[0]-1][node[1]-1] == 1 or self.current_map[node[0]-1][node[1]-1] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]-1][node[1]-1][0]
                 surrounding_values.append(g_val + 1.4)       
-        if (node[0] < (len(self.currentMap)-1) and node[1] > 0): #Bottomleft
-            if (self.currentMap[node[0]+1][node[1]-1] == 1 or self.currentMap[node[0]+1][node[1]-1] == 2):
+        if (node[0] < (len(self.current_map)-1) and node[1] > 0): #Bottomleft
+            if (self.current_map[node[0]+1][node[1]-1] == 1 or self.current_map[node[0]+1][node[1]-1] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]+1][node[1]-1][0]
                 surrounding_values.append(g_val + 1.4)            
-        if (node[0] < (len(self.currentMap)-1) and node[1] < len(self.currentMap[0])-1): #Bottomright
-            if (self.currentMap[node[0]+1][node[1]+1] == 1 or self.currentMap[node[0]+1][node[1]+1] == 2):
+        if (node[0] < (len(self.current_map)-1) and node[1] < len(self.current_map[0])-1): #Bottomright
+            if (self.current_map[node[0]+1][node[1]+1] == 1 or self.current_map[node[0]+1][node[1]+1] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]+1][node[1]+1][0]
                 surrounding_values.append(g_val + 1.4)            
-        if (node[0] > 0 and node[1] < len(self.currentMap[0])-1): #Topright
-            if (self.currentMap[node[0]-1][node[1]+1] == 1 or self.currentMap[node[0]-1][node[1]+1] == 2):
+        if (node[0] > 0 and node[1] < len(self.current_map[0])-1): #Topright
+            if (self.current_map[node[0]-1][node[1]+1] == 1 or self.current_map[node[0]-1][node[1]+1] == 2):
                 surrounding_values.append(maxsize)
             else:
                 g_val = self.node_values_list[node[0]-1][node[1]+1][0]
@@ -190,7 +202,6 @@ class Dstar():
     def find_path(self, init: bool):
         while (self.topKey() < self.calculate_key(self.current_node,init) or self.node_values_list[self.current_node[0]][self.current_node[1]][0] != self.node_values_list[self.current_node[0]][self.current_node[1]][1]):
             #Loop until current node is locally consistent and priority is lowest in the queue
-            
             old_key = self.topKey()
             chosen_node = self.node_queue.get()[1] #Chosen node to check
 
@@ -258,8 +269,8 @@ class Dstar():
 
         # if start = goal or map/goal are obstacle
         if (self.current_node[0]==self.goal[0] and self.current_node[1] == self.goal[1] 
-            or self.currentMap[self.current_node[0]][self.current_node[1]]==1 
-            or self.currentMap[self.goal[0]][self.goal[1]]==1):
+            or self.current_map[self.current_node[0]][self.current_node[1]]==1 
+            or self.current_map[self.goal[0]][self.goal[1]]==1):
             print ("Error: No path")
             return
 
@@ -269,7 +280,7 @@ class Dstar():
 
         while (path_node[0] != self.goal[0] or path_node[1] != self.goal[1]): #Until robot reaches self.goal
 
-            if (self.node_value_list[path_node[0]][path_node[1]][0] >= (maxsize)): #If g value of current node is inf
+            if (self.node_values_list[path_node[0]][path_node[1]][0] >= (maxsize)): #If g value of current node is inf
                 print ("No known path")
                 break
 
@@ -277,36 +288,36 @@ class Dstar():
 
             gvals = [] #find smallest g value (closest to self.goal)
             if (path_node[0] > 0): #above
-                if (self.currentMap[path_node[0]-1][path_node[1]] == 0):
-                    gvals.append((self.node_value_list[path_node[0]-1][path_node[1]][0] + 1, [path_node[0]-1, path_node[1]])) 
+                if (self.current_map[path_node[0]-1][path_node[1]] == 0):
+                    gvals.append((self.node_values_list[path_node[0]-1][path_node[1]][0] + 1, [path_node[0]-1, path_node[1]])) 
 
-            if (path_node[0] < len(self.node_value_list)-1): #below
-                if (self.currentMap[path_node[0]+1][path_node[1]] == 0):
-                    gvals.append((self.node_value_list[path_node[0]+1][path_node[1]][0] + 1, [path_node[0]+1, path_node[1]]))
+            if (path_node[0] < len(self.node_values_list)-1): #below
+                if (self.current_map[path_node[0]+1][path_node[1]] == 0):
+                    gvals.append((self.node_values_list[path_node[0]+1][path_node[1]][0] + 1, [path_node[0]+1, path_node[1]]))
 
             if (path_node[1] > 0): #left
-                if (self.currentMap[path_node[0]][path_node[1]-1] == 0):
-                    gvals.append((self.node_value_list[path_node[0]][path_node[1]-1][0] + 1, [path_node[0], path_node[1]-1]))
+                if (self.current_map[path_node[0]][path_node[1]-1] == 0):
+                    gvals.append((self.node_values_list[path_node[0]][path_node[1]-1][0] + 1, [path_node[0], path_node[1]-1]))
 
-            if (path_node[1] < len(self.node_value_list[0])-1): #right
-                if (self.currentMap[path_node[0]][path_node[1]+1] == 0):
-                    gvals.append((self.node_value_list[path_node[0]][path_node[1]+1][0] + 1, [path_node[0], path_node[1]+1]))
+            if (path_node[1] < len(self.node_values_list[0])-1): #right
+                if (self.current_map[path_node[0]][path_node[1]+1] == 0):
+                    gvals.append((self.node_values_list[path_node[0]][path_node[1]+1][0] + 1, [path_node[0], path_node[1]+1]))
 
             if (path_node[0] > 0 and path_node[1] > 0): #Topleft
-                if (self.currentMap[path_node[0]-1][path_node[1]-1] == 0):
-                    gvals.append((self.node_value_list[path_node[0]-1][path_node[1]-1][0] + 1.4, [path_node[0]-1, path_node[1]-1]))
+                if (self.current_map[path_node[0]-1][path_node[1]-1] == 0):
+                    gvals.append((self.node_values_list[path_node[0]-1][path_node[1]-1][0] + 1.4, [path_node[0]-1, path_node[1]-1]))
 
-            if (path_node[0] < (len(self.node_value_list)-1) and path_node[1] > 0): #Bottomleft
-                if (self.currentMap[path_node[0]+1][path_node[1]-1] == 0):
-                    gvals.append((self.node_value_list[path_node[0]+1][path_node[1]-1][0] + 1.4, [path_node[0]+1, path_node[1]-1]))
+            if (path_node[0] < (len(self.node_values_list)-1) and path_node[1] > 0): #Bottomleft
+                if (self.current_map[path_node[0]+1][path_node[1]-1] == 0):
+                    gvals.append((self.node_values_list[path_node[0]+1][path_node[1]-1][0] + 1.4, [path_node[0]+1, path_node[1]-1]))
 
-            if (path_node[0] < (len(self.node_value_list)-1) and path_node[1] < len(self.node_value_list[0])-1): #Bottomright
-                if (self.currentMap[path_node[0]+1][path_node[1]+1] == 0):
-                    gvals.append((self.node_value_list[path_node[0]+1][path_node[1]+1][0] + 1.4, [path_node[0]+1, path_node[1]+1]))
+            if (path_node[0] < (len(self.node_values_list)-1) and path_node[1] < len(self.node_values_list[0])-1): #Bottomright
+                if (self.current_map[path_node[0]+1][path_node[1]+1] == 0):
+                    gvals.append((self.node_values_list[path_node[0]+1][path_node[1]+1][0] + 1.4, [path_node[0]+1, path_node[1]+1]))
 
-            if (path_node[0] > 0 and path_node[1] < len(self.node_value_list[0])-1): #Topright
-                if (self.currentMap[path_node[0]-1][path_node[1]+1] == 0):
-                    gvals.append((self.node_value_list[path_node[0]-1][path_node[1]+1][0] + 1.4, [path_node[0]-1, path_node[1]+1]))
+            if (path_node[0] > 0 and path_node[1] < len(self.node_values_list[0])-1): #Topright
+                if (self.current_map[path_node[0]-1][path_node[1]+1] == 0):
+                    gvals.append((self.node_values_list[path_node[0]-1][path_node[1]+1][0] + 1.4, [path_node[0]-1, path_node[1]+1]))
 
         
             if (len(gvals) == 0): #Nowhere to go
@@ -342,25 +353,25 @@ class Dstar():
 
         for i in range(len(prev_map)):
             for j in range(len(prev_map[i])):
-                if (self.currentMap[i][j] != prev_map[i][j]): #for all differing values, update it and its surrounding nodes
+                if (self.current_map[i][j] != prev_map[i][j]): #for all differing values, update it and its surrounding nodes
 
                     self.update_node([i,j], False)
                     
                     if (i > 0): #above
                         self.update_node([i-1,j], False)
-                    if (i < len(self.node_value_list)-1): #below
+                    if (i < len(self.node_values_list)-1): #below
                         self.update_node([i+1,j], False)
                     if (j > 0): #left
                         self.update_node([i,j-1], False)
-                    if (j < len(self.node_value_list[0])-1): #right
+                    if (j < len(self.node_values_list[0])-1): #right
                         self.update_node([i,j+1], False)
                     if (i > 0 and j > 0): #Topleft
                         self.update_node([i-1,j-1], False)
-                    if (i < (len(self.node_value_list)-1) and j > 0): #Bottomleft
+                    if (i < (len(self.node_values_list)-1) and j > 0): #Bottomleft
                         self.update_node([i+1,j-1], False)
-                    if (i < (len(self.node_value_list)-1) and j < len(self.node_value_list[0])-1): #Bottomright
+                    if (i < (len(self.node_values_list)-1) and j < len(self.node_values_list[0])-1): #Bottomright
                         self.update_node([i+1,j+1], False)
-                    if (i > 0 and j < len(self.node_value_list[0])-1): #Topright
+                    if (i > 0 and j < len(self.node_values_list[0])-1): #Topright
                         self.update_node([i-1,j+1], False)
 
             self.find_path(False) #recalculate g values
@@ -369,17 +380,15 @@ class Dstar():
 
 
     #Updates the map with new grid whenever map is changed
-    def update_map(self,new_map):
+    def update_map(self,new_map, x_offset=0, y_offset=0):
         #Agument map to good mode
 
         #set prev_map
-        prev_map = []
-        for row in self.currentMap:
-            prev_map.append(self.currentMap[row].copy())
+        prev_map = self.current_map.copy()
 
         new_map = expand_grid(new_map, self.radius)
 
-        self.currentMap = new_map
+        self.current_map = new_map
         self.update_replan(prev_map)
 
         #New path will be published
