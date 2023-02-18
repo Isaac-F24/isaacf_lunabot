@@ -54,6 +54,11 @@ class Dstar():
         shifted_pos = [pos[0] - self.x_offset, pos[1] - self.y_offset]
         coord = [int(self.current_map.shape[0] - shifted_pos[1] / self.res + 0.5), int(shifted_pos[0] / self.res + 0.5)]
         return coord
+    
+    def convertToReal(self, coord):
+        pos = [(coord[1] + 0.5) * self.res, (self.current_map.shape[0] - coord[0] + 0.5) * self.res]
+        pos = [pos[0] + self.x_offset, pos[1] + self.y_offset]
+        return pos
 
     # returns the lowest priority in the queue
     def topKey(self):
@@ -337,6 +342,10 @@ class Dstar():
             gvals.clear()
         
         self.needs_new_path = False
+
+        for i in range(len(path_list)):
+            path_list[i] = self.convertToReal(path_list[i])
+
         return path_list
 
     '''
