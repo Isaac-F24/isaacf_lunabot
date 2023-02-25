@@ -74,9 +74,9 @@ def combo(lookAhead):
         exit()
 
     #Init Drawings
-    # draw_mpc.drawstart(rockList, percentStart, percentGoal)
-    # draw_mpc.drawDir([robotState[1],robotState[0]], arena, robotState[2], 10, -1)
-    # draw_dstar.drawstart(dStarArena, start_node, goal_node)
+    draw_mpc.drawstart(rockList, percentStart, percentGoal)
+    draw_mpc.drawDir([robotState[1],robotState[0]], arena, robotState[2], 10, -1)
+    draw_dstar.drawstart(dStarArena, start_node, goal_node)
 
 
     #Init DSTAR
@@ -153,17 +153,17 @@ def combo(lookAhead):
             path_list = node_list.copy()
 
             # #Drawing new path/removing old one
-            # node_list.remove(goal_node)
-            # for node in prev_node_list:
-            #     if (node not in node_list and (node[0] != current_node[0] or node[1] != current_node[1] )): #Eliminates old path, but not robot
-            #         if (dStarArena[node[0]][node[1]] == 0):
-            #             draw_dstar.square("white", dStarArena, node)
-            #         elif (dStarArena[node[0]][node[1]] == 1):
-            #             draw_dstar.square("gray", dStarArena, node)
-            #         else:
-            #             draw_dstar.square("light gray", dStarArena, node)
-            # for node in node_list:
-            #     draw_dstar.square("yellow", dStarArena, node)
+            node_list.remove(goal_node)
+            for node in prev_node_list:
+                if (node not in node_list and (node[0] != current_node[0] or node[1] != current_node[1] )): #Eliminates old path, but not robot
+                    if (dStarArena[node[0]][node[1]] == 0):
+                        draw_dstar.square("white", dStarArena, node)
+                    elif (dStarArena[node[0]][node[1]] == 1):
+                        draw_dstar.square("gray", dStarArena, node)
+                    else:
+                        draw_dstar.square("light gray", dStarArena, node)
+            for node in node_list:
+                draw_dstar.square("yellow", dStarArena, node)
 
             #The path has been updated and doesn't need to be reupdated
             needs_replan = False
@@ -199,7 +199,7 @@ def combo(lookAhead):
         if (newAngle >= 6.28318530718):
             newAngle -= 6.28318530718 
 
-        #draw_mpc.drawDir([(robotState[1]),(robotState[0])], arena, newAngle, velocity * 5, -1) #Draw new angle
+        draw_mpc.drawDir([(robotState[1]),(robotState[0])], arena, newAngle, velocity * 5, -1) #Draw new angle
         #END MPC
 
         print(f"Moving at {velocity:.2f}", f"velocity at {newAngle:.2f} angle." ) #Input- each one per timestep
@@ -207,7 +207,7 @@ def combo(lookAhead):
 
         #MPC
         #This block moves the robot based on calculated values
-        #draw_mpc.circle("white",(robotState[0] / arenaWidth),(robotState[1] / arenaHeight), draw_mpc.robotRad)
+        draw_mpc.circle("white",(robotState[0] / arenaWidth),(robotState[1] / arenaHeight), draw_mpc.robotRad)
 
         robotState[2] = newAngle
 
@@ -217,7 +217,7 @@ def combo(lookAhead):
         robotState[0] += xMovement
         robotState[1] += yMovement #increase state
 
-        #draw_mpc.circle("blue",(robotState[0] / arenaWidth),(robotState[1] / arenaHeight), draw_mpc.robotRad)
+        draw_mpc.circle("blue",(robotState[0] / arenaWidth),(robotState[1] / arenaHeight), draw_mpc.robotRad)
 
         #Reset after iterations
         mpc.means = numpy.full((mpc.timesteps,2), 0.0) 
@@ -226,7 +226,7 @@ def combo(lookAhead):
 
         #DSTAR
         #This block moves the dstar model and updates the visible map, and refinds path
-        #draw_dstar.square("white" , dStarArena, current_node)
+        draw_dstar.square("white" , dStarArena, current_node)
 
         current_node = [int(robotState[1]), int(robotState[0])] #Move dstar model (based on mpc- nongrid based)
 
@@ -235,7 +235,7 @@ def combo(lookAhead):
         elif (len(path_list) >= 2):
             path_list.pop(0) #Otherwise keep progress moving by removing the first one
 
-        #draw_dstar.square("blue" , dStarArena, current_node)
+        draw_dstar.square("blue" , dStarArena, current_node)
 
         prev_map = []
         for row in range(len(dStarArena)):
@@ -255,10 +255,10 @@ def combo(lookAhead):
                 for j in range(len(prev_map[i])):
                     if (dStarArena[i][j] != prev_map[i][j]):
 
-                        # if (dStarArena[i][j] == 1): #Redraw map
-                        #     draw_dstar.square("gray", dStarArena, [i,j])
-                        # if (dStarArena[i][j] == 2):
-                        #     draw_dstar.square("light gray", dStarArena, [i,j])
+                        if (dStarArena[i][j] == 1): #Redraw map
+                            draw_dstar.square("gray", dStarArena, [i,j])
+                        if (dStarArena[i][j] == 2):
+                            draw_dstar.square("light gray", dStarArena, [i,j])
 
                         #Update itself and all surrounding nodes
                         draw_dstar.update_node([i,j],goal_node,dStarArena,current_node,node_value_list,node_queue,km, False)
