@@ -9,7 +9,7 @@ class MPC:
 
     initStandardDeviation = 100.0
 
-    minVelocity = -20 #Units per second (0.05 m = 1 unit)
+    minVelocity = -20 #meter per second (0.05 m = 1 unit)
     maxVelocity = 20
 
     minAngularVelocity = -3 #Theta per second (Rad)
@@ -97,7 +97,7 @@ class MPC:
                     states[j][0][i] = tempState[0] #Set x of the current timestep/current sample to new state
                     states[j][1][i] = tempState[1]
                 else:
-                    #Differential drive model (screenshot from discord)
+
                     changeX = -1*((linearV/angularV) * numpy.sin(tempState[2])) + ((linearV/angularV) * (numpy.sin(tempState[2] + angularV * self.timeStepTime)))
                     changeY = ((linearV/angularV) * numpy.cos(tempState[2])) - ((linearV/angularV) * (numpy.cos(tempState[2] + angularV * self.timeStepTime)))
                     changeTheta = angularV * self.timeStepTime

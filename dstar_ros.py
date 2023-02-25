@@ -50,6 +50,15 @@ class Dstar():
         position = self.convertToGrid(coords)
         self.current_node = position
 
+    def reset_vals(self):
+        self.node_values_list = maxsize * np.ones((self.current_map.shape[0], self.current_map.shape[1], 2)) #2d Array of nodes: each value is [Distance (g), Estimate (rhs)]
+        self.node_queue = PriorityQueue()
+        self.km = 0
+        self.node_values_list[self.goal[0], self.goal[1], 1] = 0
+        self.insert(self.goal,self.calculate_key(self.goal, False))
+        self.needs_new_path = True
+
+
     def convertToGrid(self, pos):
         shifted_pos = [pos[0] - self.x_offset, pos[1] - self.y_offset]
         coord = [int(self.current_map.shape[0] - shifted_pos[1] / self.res + 0.5), int(shifted_pos[0] / self.res + 0.5)]
