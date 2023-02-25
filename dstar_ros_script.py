@@ -5,6 +5,7 @@ from nav_msgs.msg import Odometry, OccupancyGrid
 from tf.transformations import euler_from_quaternion
 import dstar_ros
 import numpy as np
+import matplotlib.pyplot as plt
 
 pose = []
 
@@ -71,7 +72,7 @@ def main():
             dstar = dstar_ros.Dstar(goal, pose, map, radius, res, x_offset, y_offset)
 
         if (dstar != None):
-            print("Iterate")
+            # print("Iterate")
 
             dstar.update_position(pose)
 
@@ -85,9 +86,15 @@ def main():
 
             if (dstar.needs_new_path):
                 path = np.array(dstar.createPathList())
+                temp = map.copy()
+                for point in path:
+                    temp[point[0], point[1]] = -100
+                # plt.imshow(temp, cmap='hot', interpolation='nearest')
+                # plt.show()
                 ros_struct = Float32MultiArray()
                 ros_struct.data = path.flatten()
-                path_publisher.publish(path)
+                path_publisher.publish(ros_struct)
+                print("Publish Path")
 
         rate.sleep()
 

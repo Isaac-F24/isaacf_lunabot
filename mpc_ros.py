@@ -4,19 +4,20 @@ import math
 import random
 import time
 from Map_maker import map_generate
+from Collison_avoid import expand_grid
 
 class MPC:
 
     initStandardDeviation = 100.0
 
-    minVelocity = -20 #Units per second (0.05 m = 1 unit)
-    maxVelocity = 20
+    minVelocity = -5 #Units per second (0.05 m = 1 unit)
+    maxVelocity = 5
 
-    minAngularVelocity = -3 #Theta per second (Rad)
-    maxAngularVelocity = 3
+    minAngularVelocity = -1 #Theta per second (Rad)
+    maxAngularVelocity = 1
 
 
-    def __init__(self, timesteps, sampleCount, bestSamples, iterations, timePerTimestep=0.2):
+    def __init__(self, timesteps, sampleCount, bestSamples, iterations, x_offset, y_offset, res=0.05, timePerTimestep=0.2):
         self.timesteps = timesteps #Number of timesteps per sample
         self.sampleCount = sampleCount #Number of samples to create
         self.bestSamples = bestSamples #Number of best samples to take the mean/SD of
@@ -33,6 +34,10 @@ class MPC:
 
         self.arena = []
 
+        self.res = res
+        self.x_offset = x_offset
+        self.y_offset = y_offset
+
 
 
     def updatePath(self, path):
@@ -42,11 +47,14 @@ class MPC:
     def updateState(self, state):
         self.currentState = state
     
-    def updateGrid(self, grid):
-        self.arena = grid
+    def updateGrid(self, grid, r=5):
+        self.arena = expand_grid(grid, r)
+    
 
-    def robotCoordsToGrid(self, coords):
-        pass
+    def robotCoordsToGrid(self, pos):
+        shifted_pos = [pos[0] - self.x_offset, pos[1] - self.y_offset]
+        coord = [int(shifted_pos[1] / self.res + 0.5), int(shifted_pos[0] / self.res + 0.5)]
+        return coord
 
     '''
     Generates random samples based on the current means and standard deviation values (normal dist)
@@ -133,14 +141,13 @@ class MPC:
 
                 cost += distance #add it to the total cost for this sample
 
-                yval = self.robotCoordsToGrid(int(states[j][1][i]))
-                xval = self.robotCoordsToGrid(int(states[j][0][i]))
+                coords = self.robotCoordsToGrid([states[j][0][i], states[j][1][i]])
 
-                if (yval < 0 or yval > len(arena) - 1 or xval < 0 or xval > len(arena[0]) - 1): #Check for out of bounds
+                if (coords[0] < 0 or coords[0] > len(arena) - 1 or coords[1] < 0 or coords[1] > len(arena[0]) - 1): #Check for out of bounds
                     cost = sys.maxsize
                     break
 
-                if (arena[yval][xval] == 1 or arena[yval][xval] == 2): #Check for obstacle
+                if (arena[coords[0]][coords[1]] == 1 or arena[coords[0]][coords[1]] == 2): #Check for obstacle
                     cost = sys.maxsize
                     break
 
@@ -177,6 +184,8 @@ class MPC:
 
             self.means[i][1] = numpy.mean(angularVList, dtype=float)
             self.stdDevs[i][1] = numpy.std(angularVList)
+        
+        return bestCosts[0][1]
 
         
 
@@ -191,6 +200,9 @@ class MPC:
 
         arenaGrid = self.arena
 
+        velocity = 0
+        angularVelocity = 0
+
         if ((distance(currentState, self.path[self.pathIndex]) <= distanceToPoint) and len(self.path) > self.pathIndex + 1):
             self.pathIndex += 1
 
@@ -201,11 +213,12 @@ class MPC:
             states = self.generateState(samples, currentState)
             costs = self.calculateCosts(states, arenaGrid)
 
-            self.findNewMeans(costs,samples)
+            best_idx = self.findNewMeans(costs,samples)
+
+            velocity = samples[0][0][best_idx]
+            angularVelocity = samples[0][1][best_idx]
 
         #TODO- change from mean to best sample
-        velocity = self.means[0][0]
-        angularVelocity = self.means[0][1]
 
         #Reset after iterations
         self.means = numpy.full((self.timesteps,2), 0.0) 

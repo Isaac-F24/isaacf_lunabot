@@ -24,6 +24,8 @@ class Dstar():
 
         self.current_map = init_map
 
+        self.unexpanded_map = init_map
+
         self.res = resolution
 
         goal = self.convertToGrid(goal)
@@ -50,13 +52,21 @@ class Dstar():
         position = self.convertToGrid(coords)
         self.current_node = position
 
+    def reset_values(self):
+        self.node_values_list = maxsize * np.ones((self.current_map.shape[0], self.current_map.shape[1], 2))
+        self.node_queue = PriorityQueue()
+        self.km = 0
+        self.node_values_list[self.goal[0], self.goal[1], 1] = 0
+        self.needs_new_path = True 
+        self.insert(self.goal,self.calculate_key(self.goal, False))
+
     def convertToGrid(self, pos):
         shifted_pos = [pos[0] - self.x_offset, pos[1] - self.y_offset]
-        coord = [int(self.current_map.shape[0] - shifted_pos[1] / self.res + 0.5), int(shifted_pos[0] / self.res + 0.5)]
+        coord = [int(shifted_pos[1] / self.res + 0.5), int(shifted_pos[0] / self.res + 0.5)]
         return coord
     
     def convertToReal(self, coord):
-        pos = [(coord[1] + 0.5) * self.res, (self.current_map.shape[0] - coord[0] + 0.5) * self.res]
+        pos = [(coord[1] + 0.5) * self.res, (coord[0] + 0.5) * self.res]
         pos = [pos[0] + self.x_offset, pos[1] + self.y_offset]
         return pos
 
@@ -277,7 +287,7 @@ class Dstar():
             or self.current_map[self.current_node[0]][self.current_node[1]]==1 
             or self.current_map[self.goal[0]][self.goal[1]]==1):
             print ("Error: No path")
-            return
+            return []
 
         path_node = self.current_node.copy()
 
@@ -327,24 +337,22 @@ class Dstar():
         
             if (len(gvals) == 0): #Nowhere to go
                 print("Error: No more path")
-                input()
-                return
+                return []
 
             min_val = min(gvals) #pick lowest g value
             path_node = min_val[1]
 
             if (path_node in path_list): #Doubling back- no more path
                 print("Error: Double back")
-                input()
-                return
+                return []
             
             path_list.append(path_node)
             gvals.clear()
         
         self.needs_new_path = False
 
-        for i in range(len(path_list)):
-            path_list[i] = self.convertToReal(path_list[i])
+        # for i in range(len(path_list)):
+        #     path_list[i] = self.convertToReal(path_list[i])
 
         return path_list
 
@@ -394,6 +402,11 @@ class Dstar():
 
         #set prev_map
         prev_map = self.current_map.copy()
+
+        if (self.unexpanded_map == new_map).all():
+            return
+        
+        self.unexpanded_map = new_map.copy()
 
         new_map = expand_grid(new_map, self.radius)
 
