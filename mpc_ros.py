@@ -105,7 +105,7 @@ class MPC:
                     states[j][0][i] = tempState[0] #Set x of the current timestep/current sample to new state
                     states[j][1][i] = tempState[1]
                 else:
-                    #Differential drive model (screenshot from discord)
+
                     changeX = -1*((linearV/angularV) * numpy.sin(tempState[2])) + ((linearV/angularV) * (numpy.sin(tempState[2] + angularV * self.timeStepTime)))
                     changeY = ((linearV/angularV) * numpy.cos(tempState[2])) - ((linearV/angularV) * (numpy.cos(tempState[2] + angularV * self.timeStepTime)))
                     changeTheta = angularV * self.timeStepTime
